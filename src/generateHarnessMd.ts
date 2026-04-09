@@ -17,9 +17,7 @@ export function generateHarnessMd(params: {
   const { requirement, fields, uiFramework, typeName } = params;
   const uiName = UI_FRAMEWORK_NAMES[uiFramework];
 
-  const typeBlock = fields
-    .map((f) => `  ${f.label}: ${f.type};`)
-    .join('\n');
+  const typeBlock = fields.map((f) => `  ${f.label}: ${f.type};`).join('\n');
 
   const columnDefs = fields
     .map((f) => `| ${f.label} | ${f.type} | ${getColumnDescription(f)} |`)

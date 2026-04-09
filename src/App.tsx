@@ -3,8 +3,11 @@ import type { FieldDefinition, UIFramework } from './types';
 import { UI_FRAMEWORK_OPTIONS, TS_TYPE_OPTIONS } from './types';
 import { parseRequirement } from './parseRequirement';
 import { generateHarnessMd } from './generateHarnessMd';
+import { generateCode } from './templates/generateCode';
+import DynamicPreview from './components/DynamicPreview';
 
 type Step = 'input' | 'edit' | 'result';
+type ResultTab = 'md' | 'preview' | 'code';
 
 function App() {
   const [step, setStep] = useState<Step>('input');
@@ -13,6 +16,7 @@ function App() {
   const [fields, setFields] = useState<FieldDefinition[]>([]);
   const [uiFramework, setUiFramework] = useState<UIFramework>('tailwind');
   const [harnessMd, setHarnessMd] = useState('');
+  const [resultTab, setResultTab] = useState<ResultTab>('preview');
 
   const handleParse = () => {
     if (!requirement.trim()) return;
@@ -71,9 +75,7 @@ function App() {
       {/* Header */}
       <header className="border-b border-gray-800 px-6 py-4">
         <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight">
-            Harness Studio
-          </h1>
+          <h1 className="text-xl font-bold tracking-tight">Harness Studio</h1>
           <div className="flex gap-1 text-sm text-gray-500">
             <span
               className={step === 'input' ? 'text-blue-400 font-semibold' : ''}
@@ -103,8 +105,8 @@ function App() {
             <div>
               <h2 className="text-lg font-semibold mb-2">고객 요구사항 입력</h2>
               <p className="text-sm text-gray-400 mb-4">
-                게시판 페이지에 대한 요구사항을 텍스트로 입력하세요. 키워드에 따라
-                TypeScript 타입이 자동 생성됩니다.
+                게시판 페이지에 대한 요구사항을 텍스트로 입력하세요. 키워드에
+                따라 TypeScript 타입이 자동 생성됩니다.
               </p>
               <textarea
                 className="w-full h-48 bg-gray-900 border border-gray-700 rounded-lg p-4 text-gray-100 placeholder-gray-600 focus:outline-none focus:border-blue-500 resize-none"
@@ -262,17 +264,17 @@ function App() {
           </section>
         )}
 
-        {/* Step 3: 결과 */}
+        {/* Step 3: 결과 (탭) */}
         {step === 'result' && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">하네스 문서 결과</h2>
+              <h2 className="text-lg font-semibold">결과</h2>
               <div className="flex gap-3">
                 <button
-                  onClick={handleCopy}
+                  onClick={() => setStep('edit')}
                   className="px-4 py-2 text-sm border border-gray-700 hover:border-gray-600 rounded-lg transition-colors"
                 >
-                  복사
+                  이전
                 </button>
                 <button
                   onClick={handleReset}
@@ -282,12 +284,144 @@ function App() {
                 </button>
               </div>
             </div>
-            <pre className="bg-gray-900 border border-gray-800 rounded-lg p-6 text-sm font-mono text-gray-300 overflow-x-auto whitespace-pre-wrap">
-              {harnessMd}
-            </pre>
+
+            {/* 탭 */}
+            <div className="flex gap-1 border-b border-gray-800">
+              {[
+                { key: 'preview' as const, label: '미리보기' },
+                { key: 'md' as const, label: '하네스 MD' },
+                { key: 'code' as const, label: '코드' },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setResultTab(t.key)}
+                  className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                    resultTab === t.key
+                      ? 'border-blue-500 text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 미리보기 탭 */}
+            {resultTab === 'preview' && (
+              <DynamicPreview
+                typeName={typeName}
+                fields={fields}
+                uiFramework={uiFramework}
+              />
+            )}
+
+            {/* 하네스 MD 탭 */}
+            {resultTab === 'md' && (
+              <div>
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={handleCopy}
+                    className="px-3 py-1.5 text-xs border border-gray-700 hover:border-gray-600 rounded transition-colors"
+                  >
+                    복사
+                  </button>
+                </div>
+                <pre className="bg-gray-900 border border-gray-800 rounded-lg p-6 text-sm font-mono text-gray-300 overflow-x-auto whitespace-pre-wrap">
+                  {harnessMd}
+                </pre>
+              </div>
+            )}
+
+            {/* 코드 탭 */}
+            {resultTab === 'code' && (
+              <CodeView
+                typeName={typeName}
+                fields={fields}
+                uiFramework={uiFramework}
+              />
+            )}
           </section>
         )}
       </main>
+    </div>
+  );
+}
+
+function CodeView({
+  typeName,
+  fields,
+  uiFramework,
+}: {
+  typeName: string;
+  fields: FieldDefinition[];
+  uiFramework: UIFramework;
+}) {
+  const [activeFile, setActiveFile] = useState(0);
+  const files = generateCode({ typeName, fields, uiFramework });
+
+  const handleDownloadAll = () => {
+    const content = files
+      .map((f) => `// ===== ${f.path} =====\n\n${f.content}`)
+      .join('\n\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${typeName}-harness-code.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyFile = async () => {
+    await navigator.clipboard.writeText(files[activeFile].content);
+  };
+
+  return (
+    <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* 파일 탭 + 다운로드 */}
+      <div className="flex items-center justify-between bg-gray-800 border-b border-gray-700 px-2">
+        <div className="flex gap-1 overflow-x-auto py-1">
+          {files.map((f, i) => (
+            <button
+              key={f.path}
+              onClick={() => setActiveFile(i)}
+              className={`px-3 py-1.5 text-xs rounded whitespace-nowrap transition-colors ${
+                activeFile === i
+                  ? 'bg-gray-900 text-blue-400'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {f.path.split('/').pop()}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 ml-2 shrink-0">
+          <button
+            onClick={handleCopyFile}
+            className="px-2 py-1 text-xs text-gray-400 hover:text-gray-200"
+          >
+            복사
+          </button>
+          <button
+            onClick={handleDownloadAll}
+            className="px-2 py-1 text-xs text-blue-400 hover:text-blue-300"
+          >
+            전체 다운로드
+          </button>
+        </div>
+      </div>
+
+      {/* 파일 경로 */}
+      <div className="bg-gray-900 px-4 py-1.5 border-b border-gray-800">
+        <span className="text-xs text-gray-500 font-mono">
+          {files[activeFile].path}
+        </span>
+      </div>
+
+      {/* 코드 */}
+      <pre className="bg-gray-900 p-4 text-sm font-mono text-gray-300 overflow-x-auto max-h-[600px] overflow-y-auto">
+        {files[activeFile].content}
+      </pre>
     </div>
   );
 }

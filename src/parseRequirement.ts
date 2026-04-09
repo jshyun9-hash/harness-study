@@ -39,7 +39,11 @@ export function parseRequirement(text: string): {
     fields.push({ id: crypto.randomUUID(), label: 'status', type: 'string' });
   }
   if (lower.includes('공개') || lower.includes('publish')) {
-    fields.push({ id: crypto.randomUUID(), label: 'isPublished', type: 'boolean' });
+    fields.push({
+      id: crypto.randomUUID(),
+      label: 'isPublished',
+      type: 'boolean',
+    });
   }
 
   // 타입 이름 추론
