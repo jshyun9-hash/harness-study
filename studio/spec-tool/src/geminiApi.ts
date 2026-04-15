@@ -4,7 +4,7 @@
  */
 import { HARNESS_DOCS } from './harnessLoader';
 
-const API_KEY = 'AIzaSyDf3WsgfCVE9bWcop3n5NpaEwZaTQsN-hE';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 const MODEL = 'gemini-2.5-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
