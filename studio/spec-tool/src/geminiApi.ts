@@ -124,13 +124,11 @@ ${userFeedback}
   console.log('사용자 피드백:', userFeedback);
   console.groupEnd();
 
-  const startTime = Date.now();
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const elapsed = Date.now() - startTime;
 
   if (!res.ok) {
     const err = await res.text();
@@ -140,11 +138,6 @@ ${userFeedback}
 
   const json = await res.json();
   const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
-  console.group('[Gemini API] 보완 응답');
-  console.log('응답 시간:', elapsed + 'ms');
-  console.log('원본 응답:', text);
-  console.groupEnd();
 
   let jsonStr = text.trim();
   if (jsonStr.includes('```')) {
@@ -161,12 +154,6 @@ ${userFeedback}
     fields: raw.fields ?? [],
     relatedFeatures: raw.relatedFeatures ?? [],
   };
-
-  console.group('[Gemini API] 보완 파싱 결과');
-  console.log('기능명:', parsed.featureName);
-  console.log('필드:', parsed.fields.length + '개');
-  console.log('연관 기능:', parsed.relatedFeatures.length + '개');
-  console.groupEnd();
 
   return parsed;
 }
@@ -210,7 +197,6 @@ export async function inferWithGemini(
     },
   };
 
-  // 요청 로그
   console.group('[Gemini API] 요청');
   console.log('모델:', MODEL);
   console.log('사용자 입력:', description);
@@ -223,13 +209,11 @@ export async function inferWithGemini(
   console.log('요청 시간:', new Date().toLocaleTimeString());
   console.groupEnd();
 
-  const startTime = Date.now();
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const elapsed = Date.now() - startTime;
 
   if (!res.ok) {
     const err = await res.text();
@@ -239,12 +223,6 @@ export async function inferWithGemini(
 
   const json = await res.json();
   const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
-  // 응답 로그
-  console.group('[Gemini API] 응답');
-  console.log('응답 시간:', elapsed + 'ms');
-  console.log('원본 응답:', text);
-  console.groupEnd();
 
   // JSON 추출 (```json ... ``` 블록 처리)
   let jsonStr = text.trim();
@@ -262,21 +240,6 @@ export async function inferWithGemini(
     fields: raw.fields ?? [],
     relatedFeatures: raw.relatedFeatures ?? [],
   };
-
-  console.group('[Gemini API] 파싱 결과');
-  console.log('기능명:', parsed.featureName);
-  console.log('메인 필드:', parsed.fields.length + '개');
-  console.table(parsed.fields);
-  if (parsed.relatedFeatures.length > 0) {
-    console.log('연관 기능:', parsed.relatedFeatures.length + '개');
-    for (const rf of parsed.relatedFeatures) {
-      console.log(
-        `  - ${rf.name}: ${rf.description} (필드 ${rf.fields.length}개)`,
-      );
-      console.table(rf.fields);
-    }
-  }
-  console.groupEnd();
 
   return parsed;
 }

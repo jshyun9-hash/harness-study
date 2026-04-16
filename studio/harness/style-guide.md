@@ -208,25 +208,63 @@ className="bg-white border border-gray-200 rounded-lg shadow-sm"
 
 ---
 
-### 전체 페이지 레이아웃
+### 전체 페이지 레이아웃 (AppShell)
+
+> 자세한 컴포넌트 스펙은 harness/components.md "레이아웃 컴포넌트" 섹션 참조.
 
 ```tsx
-{/* 앱 껍데기 */}
-<div className="min-h-screen bg-gray-50">
-  {/* 상단 네비게이션 */}
-  <header className="bg-[#1e3a5f] text-white px-6 py-3 shadow-md">
-    <div className="max-w-6xl mx-auto flex items-center justify-between">
-      <h1 className="text-lg font-bold tracking-tight">Harness Studio</h1>
-      <nav className="flex gap-4 text-sm text-white/80">
-        <a className="hover:text-white">메뉴1</a>
-        <a className="hover:text-white">메뉴2</a>
-      </nav>
-    </div>
-  </header>
+{/* 앱 셸 — 사이드바 + 토픽바 + 컨텐츠 */}
+<div className="h-screen flex bg-gray-50 text-gray-900">
 
-  {/* 본문 */}
-  <main className="max-w-6xl mx-auto px-6 py-6">
-    {/* 페이지 내용 */}
-  </main>
+  {/* 좌측 사이드바 — Navy 다크(#0f2540) */}
+  <aside className="w-60 shrink-0 bg-[#0f2540] text-gray-200 flex flex-col border-r border-black/20">
+    {/* h-14: 로고 + 접기 버튼 */}
+    {/* flex-1: 메뉴 섹션 (NavSection[]) */}
+    {/* 하단: 유저 정보 (아바타 + 이름) */}
+  </aside>
+
+  {/* 우측 영역 */}
+  <div className="flex-1 flex flex-col min-w-0">
+    {/* 토픽바 — h-14, 흰색 */}
+    <header className="h-14 shrink-0 bg-white border-b border-gray-200 flex items-center px-6">
+      {/* 좌: 페이지 타이틀 / 브레드크럼 */}
+      {/* 우: 알림 버튼 */}
+    </header>
+
+    {/* 컨텐츠 */}
+    <main className="flex-1 overflow-y-auto">
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* 페이지 내용 */}
+      </div>
+    </main>
+  </div>
 </div>
 ```
+
+#### 사이드바 색상 토큰
+
+| 용도 | 색상 | Tailwind |
+|------|------|----------|
+| 배경 | #0f2540 | `bg-[#0f2540]` |
+| 활성 메뉴 배경 | white/10 | `bg-white/10` |
+| 활성 좌측 바 | #d4a843 (Gold) | `bg-[#d4a843]` |
+| 메뉴 텍스트 | gray-300 | `text-gray-300` |
+| 메뉴 hover | white | `hover:text-white hover:bg-white/5` |
+| 섹션 제목 | gray-400 | `text-gray-400 uppercase text-[10px]` |
+
+#### 토픽바 스타일
+
+| 용도 | 값 |
+|------|------|
+| 높이 | `h-14` |
+| 배경 | `bg-white border-b border-gray-200` |
+| 타이틀 | `text-base font-semibold text-gray-900` |
+| 브레드크럼 | `text-xs text-gray-500`, 현재 `text-gray-900 font-medium` |
+
+#### 컨텐츠 영역
+
+| 용도 | 값 |
+|------|------|
+| 최대 너비 | `max-w-7xl` |
+| 패딩 | `px-6 py-6` |
+| 스크롤 | `overflow-y-auto` (main에 적용) |

@@ -15,6 +15,7 @@
 - `studio/frontend/` — React 프로젝트
 - `studio/backend/` — Spring Boot 프로젝트
 - `studio/data/` — H2 DB 파일
+- `studio/harness/schema.md` — 테이블 목록/관계도 내용을 초기 템플릿으로 되돌림
 
 ## 보존 대상 (절대 삭제 금지)
 - `studio/CLAUDE.md`
@@ -32,7 +33,23 @@
    rm -rf studio/frontend studio/backend studio/data
    ```
    또는 프로세스가 파일을 잡고 있다면 먼저 dev 서버 종료 안내
-4. **결과 보고**: 삭제된 폴더 목록 + 남은 파일 확인
+4. **schema.md 초기화**: 테이블 목록/관계도를 빈 템플릿으로 되돌림
+   ```markdown
+   # DB 스키마 현황
+
+   > 이 파일은 현재 프로젝트의 DB 테이블 구조를 기록한다.
+   > 기능이 추가/수정될 때마다 이 파일을 업데이트한다.
+   > AI 추론 시 이 파일을 참조하여 기존 테이블과의 관계를 파악한다.
+
+   ## 테이블 목록
+
+   (없음)
+
+   ## 테이블 관계도
+
+   (없음)
+   ```
+5. **결과 보고**: 삭제된 폴더 목록 + 남은 파일 확인
 
 ## 주의사항
 - dev 서버(npm run dev, gradle bootRun)가 실행 중이면 파일 잠김 발생 가능

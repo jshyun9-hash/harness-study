@@ -119,6 +119,18 @@ skills/init-backend.md `global/config/GlobalExceptionHandler.java` 섹션 추가
 - 프론트 `vite.config.ts`에 `proxy: { '/api': 'http://localhost:8080' }` **필수**
 - 백엔드 CORS는 `http://localhost:5175` 허용 **필수**
 
+### IPv6 프록시 오류 (localhost → ::1)
+- `localhost`가 IPv6(`::1`)로 resolve되면 백엔드(IPv4만 listen)에 연결 실패
+- 에러: `connect ECONNREFUSED ::1:8080`
+- **해결**: proxy target을 `http://127.0.0.1:8080`으로 명시
+  ```ts
+  proxy: {
+    '/api': {
+      target: 'http://127.0.0.1:8080',
+    },
+  }
+  ```
+
 ### 반영 위치
 harness/architecture.md 포트 매핑 표 추가 고려
 
@@ -149,6 +161,26 @@ harness/stack.md 이미 포함되어 있음 (확인 완료)
 
 ### 반영 위치
 skills/crud-page.md **"검증 순서"** 명시
+
+---
+
+## 11. Spring Initializr 기본값 vs 하네스 고정 버전
+
+### 문제
+Spring Initializr는 **현재 최신 GA**(예: Boot 4.0.5 + Gradle 9.4.1)를 기본값으로 내려줌.
+하지만 하네스 `init-backend.md`는 Spring Boot **3.3.0** 고정 → Gradle 9.x와 비호환.
+스캐폴딩 직후 `./gradlew build` 실행 시 플러그인 호환성 에러 발생.
+
+### 해결
+스캐폴딩 후 **Gradle Wrapper를 8.8로 다운그레이드**한다.
+`backend/gradle/wrapper/gradle-wrapper.properties`의 `distributionUrl`을
+`gradle-8.8-bin.zip`로 수정 후 빌드.
+
+또는 `build.gradle.kts`의 Spring Boot 버전을 최신(4.0.x)로 올리고 Java 버전도 맞춰 올리는 대안도 있음.
+하네스 정책(Spring Boot 3.x)을 유지하려면 Gradle 8.x 고정이 정답.
+
+### 반영 위치
+skills/init-backend.md에 Gradle 8.8 강제 단계 추가 고려
 
 ---
 

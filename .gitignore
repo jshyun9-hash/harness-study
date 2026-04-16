@@ -20,6 +20,15 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Generated folders
+studio/frontend/
+studio/backend/
+studio/spec/
+studio/data/
+
+# Claude Code
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

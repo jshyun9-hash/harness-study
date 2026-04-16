@@ -6,15 +6,21 @@
 studio/
 ├── frontend/                    # React 프론트엔드
 │   ├── src/
+│   │   ├── components/
+│   │   │   ├── layout/         # 앱 셸 (사이드바 + 토픽바)
+│   │   │   │   ├── AppShell.tsx
+│   │   │   │   ├── Sidebar.tsx
+│   │   │   │   └── Topbar.tsx
+│   │   │   ├── common/         # 공통 UI 컴포넌트
+│   │   │   │   └── ...
+│   │   │   └── {기능명}/       # 기능별 컴포넌트
+│   │   │       ├── {기능명}Table.tsx
+│   │   │       └── {기능명}Form.tsx
 │   │   ├── pages/              # 페이지 컴포넌트
 │   │   │   └── {기능명}/
 │   │   │       ├── {기능명}ListPage.tsx
 │   │   │       ├── {기능명}DetailPage.tsx
 │   │   │       └── {기능명}FormPage.tsx
-│   │   ├── components/         # 재사용 UI 컴포넌트
-│   │   │   └── {기능명}/
-│   │   │       ├── {기능명}Table.tsx
-│   │   │       └── {기능명}Form.tsx
 │   │   ├── hooks/              # 커스텀 훅
 │   │   │   └── use{기능명}.ts
 │   │   ├── types/              # TypeScript 타입

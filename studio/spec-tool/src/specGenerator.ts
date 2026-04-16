@@ -37,6 +37,8 @@ export interface SpecInput {
   fields: FieldSpec[];
   searchFields: SearchFieldSpec[];
   formFields: FormFieldSpec[];
+  useSearch: boolean;
+  useForm: boolean;
   relatedFeatures?: RelatedFeatureSpec[];
 }
 
@@ -85,7 +87,7 @@ export function inferSearchFields(fields: FieldSpec[]): SearchFieldSpec[] {
  * 기본: 전부 활성, id/viewCount/likeCount/createdAt/updatedAt은 비활성
  */
 export function inferFormFields(fields: FieldSpec[]): FormFieldSpec[] {
-  const EXCLUDE_FROM_FORM = ['viewCount', 'likeCount'];
+  const EXCLUDE_FROM_FORM = ['viewCount', 'likeCount', 'commentCount'];
 
   return fields.map((f) => {
     let formType: FormFieldSpec['formType'] = 'text';
@@ -227,11 +229,17 @@ export function generateSpecMd(input: SpecInput): string {
     fields,
     searchFields,
     formFields,
+    useSearch,
+    useForm,
     relatedFeatures = [],
   } = input;
-  const activeSearchFields = searchFields.filter((f) => f.enabled);
-  const activeFormFields = formFields.filter((f) => f.enabled);
-  const tableName = toSnakeCase(featureName) + '_board';
+  const activeSearchFields = useSearch
+    ? searchFields.filter((f) => f.enabled)
+    : [];
+  const activeFormFields = useForm
+    ? formFields.filter((f) => f.enabled)
+    : [];
+  const tableName = toSnakeCase(featureName);
   const pkName = tableName + '_id';
 
   // 필드 테이블
@@ -310,7 +318,7 @@ ${fieldTable}
 | PUT | /api/${lowerName}s/{id} | 수정 |
 | DELETE | /api/${lowerName}s/{id} | 삭제 |
 
-## UI 요구사항 — 검색 (SearchCard)
+${useSearch ? `## UI 요구사항 — 검색 (SearchCard)
 
 공통 SearchCard 컴포넌트를 사용한다. 아래 검색 필드를 선언적으로 정의한다.
 
@@ -322,9 +330,11 @@ ${activeSearchFields.map((sf) => `| ${sf.fieldKey} | ${sf.searchType} | ${sf.lab
 const SEARCH_FIELDS: SearchField[] = [
 ${activeSearchFields.map((sf) => `  { key: '${sf.fieldKey}', type: '${sf.searchType}', label: '${sf.label}'${sf.searchType === 'select' ? `, options: [/* 옵션 정의 */]` : ''} },`).join('\n')}
 ];
-\`\`\`
+\`\`\`` : `## UI 요구사항 — 검색 (SearchCard)
 
-## UI 요구사항 — 입력/수정 폼 (FormCard)
+검색 기능 사용 안 함 (SearchCard 미포함)`}
+
+${useForm ? `## UI 요구사항 — 입력/수정 폼 (FormCard)
 
 공통 FormCard 컴포넌트를 사용한다. 아래 폼 필드를 선언적으로 정의한다.
 
@@ -353,13 +363,15 @@ ${activeFormFields
   })
   .join('\n')}
 ];
-\`\`\`
+\`\`\`` : `## UI 요구사항 — 입력/수정 폼 (FormCard)
+
+입력/수정 폼 사용 안 함 (조회 전용 화면)`}
 
 ## UI 요구사항 — 공통
-- 목록 페이지: SearchCard + DataTable 사용
-- 상세보기: 다이얼로그 (lg 사이즈)
+- 목록 페이지: ${useSearch ? 'SearchCard + ' : ''}DataTable 사용
+- 상세보기: 다이얼로그 (lg 사이즈)${useForm ? `
 - 작성/수정: 다이얼로그 (lg 사이즈) + FormCard
-- 삭제: 확인 다이얼로그 (sm 사이즈)
+- 삭제: 확인 다이얼로그 (sm 사이즈)` : ''}
 - 로딩/에러/빈상태 모두 처리
 
 ## 검증 규칙
@@ -386,6 +398,7 @@ ${relatedFeatures.length > 0 ? generateRelatedFeaturesMd(relatedFeatures) : ''}
 - harness/architecture.md → 레이어 경계, API 표준
 - harness/components.md → 공통 컴포넌트 강제 사용 (Input, DataTable, Dialog, FormContainer 등)
 - harness/style-guide.md → 비즈니스 테마 (Navy + Gold)
+- harness/naming.md → 테이블/컬럼 명명 규칙 (snake_case, PK/FK 등)
 - harness/ux.md → 다이얼로그 규칙, 로딩/빈상태/에러
 - skills/crud-page.md → CRUD 생성 순서
 

@@ -18,6 +18,7 @@
 - harness/components.md — 공통 컴포넌트 (Input, Button, DataTable, Dialog, FormContainer 등)
 - harness/style-guide.md — 스타일 가이드 (비즈니스 테마: Navy + Gold)
 - harness/ux.md — UX 패턴 (로딩, 빈상태, 에러, 다이얼로그)
+- harness/naming.md — 테이블/컬럼 명명 규칙 (snake_case, PK/FK/감사컬럼 등)
 - harness/schema.md — DB 스키마 현황 (기능 생성 후 반드시 업데이트)
 
 ## 스킬 (생성/관리 레시피)

@@ -6,27 +6,8 @@
 
 ## 테이블 목록
 
-(아직 생성된 테이블 없음 — 기능 생성 후 업데이트)
-
-<!--
-기능 생성 후 아래 형식으로 추가:
-
-### notice_board
-| 컬럼 | 타입 | 설명 | 비고 |
-|------|------|------|------|
-| notice_board_id | BIGINT PK | 고유 ID | AUTO_INCREMENT |
-| title | VARCHAR(200) | 제목 | NOT NULL |
-| content | TEXT | 내용 | NOT NULL |
-| author | VARCHAR(50) | 작성자 | NOT NULL |
-| category | VARCHAR(50) | 카테고리 | |
-| view_count | INTEGER | 조회수 | DEFAULT 0 |
-| like_count | INTEGER | 좋아요 | DEFAULT 0 |
-| is_pinned | BOOLEAN | 고정여부 | DEFAULT FALSE |
-| created_at | TIMESTAMP | 생성일 | NOT NULL |
-| updated_at | TIMESTAMP | 수정일 | NOT NULL |
+(아직 생성된 테이블 없음)
 
 ## 테이블 관계도
 
-notice_board (1) ──── (N) comment
-                          └─ notice_board_id FK
--->
+(아직 관계 없음)

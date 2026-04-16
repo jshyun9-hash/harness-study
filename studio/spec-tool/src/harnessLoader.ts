@@ -12,6 +12,7 @@ import architectureMd from '../../harness/architecture.md?raw';
 import componentsMd from '../../harness/components.md?raw';
 import styleGuideMd from '../../harness/style-guide.md?raw';
 import uxMd from '../../harness/ux.md?raw';
+import namingMd from '../../harness/naming.md?raw';
 import schemaMd from '../../harness/schema.md?raw';
 import crudPageMd from '../../skills/crud-page.md?raw';
 
@@ -61,6 +62,12 @@ export const HARNESS_DOCS: HarnessDoc[] = [
     group: 'harness',
   },
   { path: 'harness/ux.md', name: 'ux.md', content: uxMd, group: 'harness' },
+  {
+    path: 'harness/naming.md',
+    name: 'naming.md',
+    content: namingMd,
+    group: 'harness',
+  },
   {
     path: 'harness/schema.md',
     name: 'schema.md',

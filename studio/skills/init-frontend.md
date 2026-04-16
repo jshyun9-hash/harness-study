@@ -43,7 +43,9 @@ export default defineConfig({
   server: {
     port: 5175,
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': {
+        target: 'http://127.0.0.1:8080',
+      },
     },
   },
 });
@@ -83,7 +85,17 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-### 4. 공통 컴포넌트 생성
+### 4. 레이아웃 컴포넌트 생성 (필수)
+
+harness/components.md "레이아웃 컴포넌트 (AppShell)" 섹션 명세대로 생성한다.
+
+- `src/components/layout/AppShell.tsx` — 사이드바 + 토픽바 + 컨텐츠 컨테이너
+- `src/components/layout/Sidebar.tsx` — 좌측 고정 사이드바 (Navy 다크 #0f2540, 접기/펼치기, Gold 활성 바, 하단 유저)
+- `src/components/layout/Topbar.tsx` — 상단 슬림 바 (h-14, 흰색, 브레드크럼, 알림)
+
+> 스펙 요약: Sidebar 펼침 w-60 / 접힘 w-16, 접힘 시 로고 숨기고 chevron만 가운데 표시, 하단 유저(아바타+이름+caption), Topbar는 좌측 타이틀/브레드크럼 + 우측 알림
+
+### 5. 공통 컴포넌트 생성
 
 harness/components.md 명세대로 아래 파일들을 모두 생성한다.
 스타일은 harness/style-guide.md의 비즈니스 테마(Navy + Gold) 준수.
@@ -112,25 +124,43 @@ harness/components.md 명세대로 아래 파일들을 모두 생성한다.
 **공통 타입**:
 - `src/types/common.ts` — `ApiResponse<T>`, `PageResponse<T>` 등
 
-### 5. App.tsx (빈 상태)
+### 6. App.tsx (AppShell 적용 — 빈 상태)
 ```tsx
+import AppShell from './components/layout/AppShell';
+import type { NavSection } from './components/layout/Sidebar';
+
+const sections: NavSection[] = [
+  {
+    title: '메인',
+    items: [
+      { key: 'home', label: '대시보드', icon: /* HomeIcon SVG */, active: true },
+    ],
+  },
+  {
+    title: '설정',
+    items: [
+      { key: 'settings', label: '환경설정', icon: /* SettingsIcon SVG */ },
+    ],
+  },
+];
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-[#1e3a5f] text-white px-6 py-3 shadow-md">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-lg font-bold tracking-tight">서비스명</h1>
-        </div>
-      </header>
-      <main className="max-w-6xl mx-auto px-6 py-6">
-        <p className="text-sm text-gray-500">기능이 추가되면 여기에 표시됩니다.</p>
-      </main>
-    </div>
+    <AppShell
+      brand="Harness Studio"
+      sections={sections}
+      user={{ name: 'User', caption: '관리자' }}
+      pageTitle="대시보드"
+    >
+      <p className="text-sm text-gray-500">기능이 추가되면 여기에 표시됩니다.</p>
+    </AppShell>
   );
 }
 ```
 
-### 6. 검증
+> 아이콘은 인라인 SVG (외부 의존성 없이). 기능 추가 시 sections에 메뉴 항목 추가.
+
+### 7. 검증
 ```bash
 cd frontend
 npx tsc -b

@@ -1,5 +1,121 @@
 # 공통 컴포넌트 설계
 
+## 레이아웃 컴포넌트 (AppShell)
+
+```
+frontend/src/
+├── components/
+│   └── layout/
+│       ├── AppShell.tsx         # 사이드바 + 토픽바 + 컨텐츠 컨테이너
+│       ├── Sidebar.tsx          # 좌측 고정 사이드바
+│       └── Topbar.tsx           # 상단 슬림 토픽바
+```
+
+> **모든 페이지는 AppShell 안에서 렌더링한다.** AppShell을 거치지 않는 페이지는 금지.
+> App.tsx에서 AppShell로 감싸고, 내부에 페이지 컴포넌트를 배치한다.
+
+### AppShell 구조
+
+```
+┌─────────────────────────────────────────────────┐
+│ Sidebar (w-60/w-16)  │  Topbar (h-14, 흰색)     │
+│  ┌──────────────┐    │  브레드크럼 | 알림        │
+│  │ 로고 + 접기  │    ├──────────────────────────┤
+│  ├──────────────┤    │                          │
+│  │ 메인         │    │  main (max-w-7xl)        │
+│  │  • 메뉴1     │    │  페이지 컨텐츠           │
+│  │  • 메뉴2 ◄  │    │                          │
+│  │ 설정         │    │                          │
+│  │  • 환경설정  │    │                          │
+│  ├──────────────┤    │                          │
+│  │ 유저 정보    │    │                          │
+│  └──────────────┘    └──────────────────────────┘
+```
+
+### Sidebar 스펙
+
+| 항목 | 값 |
+|------|------|
+| 펼침 너비 | `w-60` (240px) |
+| 접힘 너비 | `w-16` (64px) |
+| 배경색 | `#0f2540` (Navy 다크) |
+| 텍스트 | `text-gray-200` / hover `text-white` |
+| 활성 메뉴 | `bg-white/10` + 좌측 Gold 바 (`#d4a843`, w-0.5) |
+| 브랜드 영역 | h-14, Gold 로고 박스 + 브랜드명 + 접기 chevron |
+| 접기 동작 | chevron 회전 180°, 로고/텍스트 숨김 → 접기 버튼만 가운데 표시 |
+| 하단 | 유저 정보 (아바타 + 이름 + caption). 접힘 시 아바타만 표시 |
+| 메뉴 섹션 | `NavSection[]` (title + items), 접힘 시 title 숨김 |
+
+### Sidebar 타입
+
+```tsx
+type NavItem = {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+};
+
+type NavSection = {
+  title?: string;
+  items: NavItem[];
+};
+
+type SidebarUser = {
+  name: string;
+  initial?: string;   // 아바타 글자 (기본: name 첫 글자)
+  caption?: string;    // 부제 (역할 등)
+};
+```
+
+### Topbar 스펙
+
+| 항목 | 값 |
+|------|------|
+| 높이 | `h-14` |
+| 배경 | 흰색, `border-b border-gray-200` |
+| 좌측 | 페이지 타이틀 또는 브레드크럼 (text-base font-semibold) |
+| 우측 | 알림 버튼 (추후 확장 가능) |
+
+### App.tsx에서의 사용 패턴
+
+```tsx
+import AppShell from './components/layout/AppShell';
+import type { NavSection } from './components/layout/Sidebar';
+
+const sections: NavSection[] = [
+  {
+    title: '메인',
+    items: [
+      { key: 'notice', label: '공지사항', icon: <NoticeIcon />, active: true },
+    ],
+  },
+  {
+    title: '설정',
+    items: [
+      { key: 'settings', label: '환경설정', icon: <SettingsIcon /> },
+    ],
+  },
+];
+
+export default function App() {
+  return (
+    <AppShell
+      brand="Harness Studio"
+      sections={sections}
+      user={{ name: 'User', caption: '관리자' }}
+      pageTitle="공지사항"
+      breadcrumbs={[{ label: '메인' }]}
+    >
+      <NoticeListPage />
+    </AppShell>
+  );
+}
+```
+
+---
+
 ## 공통 컴포넌트 목록
 
 ```

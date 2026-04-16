@@ -26,9 +26,12 @@ export default function App() {
   const [fields, setFields] = useState<FieldSpec[]>([]);
   const [searchFields, setSearchFields] = useState<SearchFieldSpec[]>([]);
   const [formFields, setFormFields] = useState<FormFieldSpec[]>([]);
+  const [useSearch, setUseSearch] = useState(true);
+  const [useForm, setUseForm] = useState(true);
   const [relatedFeatures, setRelatedFeatures] = useState<RelatedFeature[]>([]);
   const [generated, setGenerated] = useState('');
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const stack = getStackSummary();
@@ -133,6 +136,14 @@ export default function App() {
     );
   };
 
+  const toggleFormField = (fieldKey: string) => {
+    setFormFields((prev) =>
+      prev.map((f) =>
+        f.fieldKey === fieldKey ? { ...f, enabled: !f.enabled } : f,
+      ),
+    );
+  };
+
   const handleAddField = () => {
     setFields((prev) => [
       ...prev,
@@ -168,6 +179,8 @@ export default function App() {
       fields,
       searchFields,
       formFields,
+      useSearch,
+      useForm,
       relatedFeatures,
     });
     setGenerated(md);
@@ -178,6 +191,19 @@ export default function App() {
     await navigator.clipboard.writeText(generated);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveSpec = async () => {
+    const fileName = `${featureName}.md`;
+    const res = await fetch('/__save-spec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName, content: generated }),
+    });
+    if (res.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   const currentDoc = selectedFile
@@ -616,89 +642,124 @@ export default function App() {
               <div className="grid grid-cols-2 gap-6">
                 {/* 검색 필드 선택 */}
                 <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-                  <h2 className="text-base font-semibold text-gray-800 mb-1">
-                    검색 조건 (SearchCard)
-                  </h2>
-                  <p className="text-xs text-gray-500 mb-4">
-                    체크하면 검색 카드에 포함됩니다
-                  </p>
-                  <div className="space-y-2">
-                    {searchFields.map((sf) => (
-                      <label
-                        key={sf.fieldKey}
-                        className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                          sf.enabled
-                            ? 'bg-[#f0f4f8] border-[#1e3a5f]/30'
-                            : 'bg-white border-gray-200'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={sf.enabled}
-                          onChange={() => toggleSearchField(sf.fieldKey)}
-                          className="accent-[#1e3a5f]"
-                        />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-gray-800">
-                            {sf.label}
-                          </span>
-                          <span className="text-xs text-gray-400 font-mono ml-2">
-                            {sf.fieldKey}
-                          </span>
-                        </div>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">
-                          {sf.searchType}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                  <label className="flex items-center gap-2 mb-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useSearch}
+                      onChange={() => setUseSearch((v) => !v)}
+                      className="accent-[#1e3a5f] w-4 h-4"
+                    />
+                    <h2 className="text-base font-semibold text-gray-800">
+                      검색 조건 (SearchCard)
+                    </h2>
+                  </label>
+                  {useSearch ? (
+                    <>
+                      <p className="text-xs text-gray-500 mb-4 ml-6">
+                        체크하면 검색 카드에 포함됩니다
+                      </p>
+                      <div className="space-y-2">
+                        {searchFields.map((sf) => (
+                          <label
+                            key={sf.fieldKey}
+                            className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                              sf.enabled
+                                ? 'bg-[#f0f4f8] border-[#1e3a5f]/30'
+                                : 'bg-white border-gray-200'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={sf.enabled}
+                              onChange={() => toggleSearchField(sf.fieldKey)}
+                              className="accent-[#1e3a5f]"
+                            />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-800">
+                                {sf.label}
+                              </span>
+                              <span className="text-xs text-gray-400 font-mono ml-2">
+                                {sf.fieldKey}
+                              </span>
+                            </div>
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">
+                              {sf.searchType}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-400 ml-6 mt-1">
+                      검색 기능을 사용하지 않습니다
+                    </p>
+                  )}
                 </div>
 
-                {/* 폼 필드 표시 (읽기 전용) */}
+                {/* 폼 필드 선택 */}
                 <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-                  <h2 className="text-base font-semibold text-gray-800 mb-1">
-                    입력/수정 폼 (FormCard)
-                  </h2>
-                  <p className="text-xs text-gray-500 mb-4">
-                    필드 정의를 기반으로 자동 구성됩니다
-                  </p>
-                  <div className="space-y-2">
-                    {formFields.map((ff) => {
-                      const field = fields.find((f) => f.name === ff.fieldKey);
-                      return (
-                        <div
-                          key={ff.fieldKey}
-                          className={`flex items-center gap-3 p-2.5 rounded-lg border ${
-                            ff.enabled
-                              ? 'bg-[#f0f4f8] border-[#1e3a5f]/30'
-                              : 'bg-gray-50 border-gray-200 opacity-50'
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              ff.enabled ? 'bg-[#1e3a5f]' : 'bg-gray-300'
-                            }`}
-                          />
-                          <div className="flex-1">
-                            <span className="text-sm font-medium text-gray-800">
-                              {ff.label}
-                            </span>
-                            <span className="text-xs text-gray-400 font-mono ml-2">
-                              {ff.fieldKey}
-                            </span>
-                            {field?.required && (
-                              <span className="text-xs text-red-500 ml-1">
-                                *필수
+                  <label className="flex items-center gap-2 mb-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useForm}
+                      onChange={() => setUseForm((v) => !v)}
+                      className="accent-[#1e3a5f] w-4 h-4"
+                    />
+                    <h2 className="text-base font-semibold text-gray-800">
+                      입력/수정 폼 (FormCard)
+                    </h2>
+                  </label>
+                  {useForm ? (
+                    <>
+                      <p className="text-xs text-gray-500 mb-4 ml-6">
+                        체크하면 입력/수정 폼에 포함됩니다
+                      </p>
+                      <div className="space-y-2">
+                        {formFields.map((ff) => {
+                          const field = fields.find(
+                            (f) => f.name === ff.fieldKey,
+                          );
+                          return (
+                            <label
+                              key={ff.fieldKey}
+                              className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                                ff.enabled
+                                  ? 'bg-[#f0f4f8] border-[#1e3a5f]/30'
+                                  : 'bg-white border-gray-200 opacity-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={ff.enabled}
+                                onChange={() => toggleFormField(ff.fieldKey)}
+                                className="accent-[#1e3a5f]"
+                              />
+                              <div className="flex-1">
+                                <span className="text-sm font-medium text-gray-800">
+                                  {ff.label}
+                                </span>
+                                <span className="text-xs text-gray-400 font-mono ml-2">
+                                  {ff.fieldKey}
+                                </span>
+                                {field?.required && (
+                                  <span className="text-xs text-red-500 ml-1">
+                                    *필수
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">
+                                {ff.formType}
                               </span>
-                            )}
-                          </div>
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">
-                            {ff.formType}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-400 ml-6 mt-1">
+                      입력/수정 폼을 사용하지 않습니다 (조회 전용)
+                    </p>
+                  )}
                 </div>
 
                 {/* 하단 버튼 */}
@@ -748,6 +809,18 @@ export default function App() {
                         }`}
                       >
                         {copied ? '✓ 복사됨!' : '클립보드에 복사'}
+                      </button>
+                      <button
+                        onClick={handleSaveSpec}
+                        className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+                          saved
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-[#b8860b] text-white hover:bg-[#a67809]'
+                        }`}
+                      >
+                        {saved
+                          ? `✓ ${featureName}.md 저장됨!`
+                          : `MD 파일 생성 (spec/${featureName}.md)`}
                       </button>
                     </div>
                   </div>
