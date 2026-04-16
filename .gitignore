@@ -25,6 +25,9 @@ studio/frontend/
 studio/backend/
 studio/spec/
 studio/data/
+example/frontend/
+example/backend/
+example/data/
 
 # Claude Code
 .claude/
