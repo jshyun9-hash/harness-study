@@ -135,10 +135,14 @@ example/
 - **생성된 코드를 수동 수정 금지** — 필요하면 YML 또는 하네스 규칙을 수정하고 재생성
 
 ### "초기화 해줘" / "리셋 해줘" 요청 시
-- projectId 확인 (어느 프로젝트인지 물어봄, 명확하면 생략)
 - skills/reset-project.md 실행
-- `projects/{id}/` 만 삭제 (hashness, skills, spec-requests, specs, log 보존)
+- 분기:
+  - **projectId 명시** (예: "resort-reservation 초기화 해줘") → 해당 프로젝트만 삭제
+  - **projectId 미지정** (예: "초기화 해줘") → `projects/` 아래 **전체** 프로젝트 삭제
+- 공통 보존 대상: harness/, skills/, spec-requests/, specs/, log/, CLAUDE.md, README.md
 - 삭제 전 사용자 확인 필수
+  - 단일: `yes / no`
+  - 전체: `reset all` 리터럴 확인 (오조작 방지)
 
 ### 명세 없이 "프론트/백 셋팅만 해줘" 요청 시
 - projectId 필요. 없으면 물어봄.
