@@ -11,13 +11,89 @@ YAML 명세 작성 시 반드시 아래 규칙을 따른다.
 
 | 섹션 | 필수 | 설명 |
 |------|------|------|
-| `project` | O | 프로젝트명, 설명 |
+| `project` | O | 프로젝트 메타데이터 (id, version, ports, database 등) |
+| `changelog` | O | 버전별 변경 이력 (v1은 "초기 버전") |
 | `entities` | O | 엔티티 정의 (테이블, 필드, 검증, 관계) |
 | `mock_data` | △ | data_source: mock인 엔티티가 있으면 필수 |
+| `seed_data` | △ | 재생성 시 복원할 초기 데이터 (선택) |
 | `apis` | O | API 엔드포인트 정의 |
 | `pages` | O | 페이지 정의 (메뉴 자동 생성 포함) |
 | `auth` | O | 인증/권한 규칙 |
 | `business_rules` | O | 핵심 비즈니스 로직 요약 |
+
+---
+
+## 1.1 project 섹션
+
+```yaml
+project:
+  id: resort-reservation          # kebab-case, 폴더명과 동일
+  name: 리조트 예약 시스템          # 한글 표시명
+  description: 리조트 객실 예약 시스템 (회원 유형별 객실/요금 차등)
+  version: 1                      # 현재 YML 버전 (업데이트 시 +1)
+  ports:
+    backend: 8081                 # 신규 생성 시 다른 프로젝트 YML과 충돌하지 않도록 할당
+    frontend: 5176
+  database:
+    name: resortdb                # H2 파일명 (projects/{id}/data/{name}.mv.db)
+```
+
+| 속성 | 필수 | 설명 |
+|------|------|------|
+| `id` | O | 프로젝트 식별자 (kebab-case). `projects/{id}/` 폴더명과 일치해야 함 |
+| `name` | O | 한글 표시명 |
+| `description` | O | 프로젝트 설명 |
+| `version` | O | YML 버전 번호 (정수, 업데이트마다 +1) |
+| `ports.backend` | O | 백엔드 포트 (다른 프로젝트와 충돌 금지) |
+| `ports.frontend` | O | 프론트엔드 포트 (다른 프로젝트와 충돌 금지) |
+| `database.name` | O | H2 DB 파일명 (다른 프로젝트와 충돌 금지) |
+
+**포트·DB 이름 할당 규칙**
+- 신규 프로젝트 생성 시 `specs/` 아래 모든 YML을 스캔하여 이미 쓰인 값을 파악
+- 충돌하지 않는 값을 자동 할당 후 YML에 고정 기록
+- 한 번 기록된 값은 **변경하지 않는다** (deterministic 보장)
+
+## 1.2 changelog 섹션
+
+```yaml
+changelog:
+  - version: 2
+    date: 2026-04-17
+    generation: 완전 재생성         # 또는 "증분 수정", "신규 생성"
+    changes:
+      - 예약 취소 기능 추가
+      - 객실 요금 구조 변경 (평일/주말 분리)
+  - version: 1
+    date: 2026-04-16
+    generation: 신규 생성
+    changes:
+      - 초기 버전 (회원가입, 객실 조회/예약)
+```
+
+| 속성 | 필수 | 설명 |
+|------|------|------|
+| `version` | O | 해당 변경의 버전 번호 |
+| `date` | O | 변경 일자 (YYYY-MM-DD) |
+| `generation` | O | 생성 방식: `신규 생성`, `완전 재생성`, `증분 수정` |
+| `changes` | O | 변경 내용 리스트 (한 줄 요약) |
+
+changelog의 최상단 엔트리의 `version` 이 `project.version` 과 같아야 한다.
+
+## 1.3 seed_data 섹션 (선택)
+
+재생성 시 DB 초기 데이터를 복원하기 위한 선언적 데이터. 생략 가능.
+
+```yaml
+seed_data:
+  Member:
+    - { login_id: admin, password: admin123, member_name: 관리자, phone: "010-0000-0000", parcel_member_no: null }
+  Room:
+    - { room_code: R001, room_name: 디럭스룸, stock_count: 5 }
+```
+
+- 키는 엔티티명과 일치
+- 리스트 항목은 해당 엔티티 필드와 일치
+- 재생성 시 이 데이터로 DB 초기화
 
 ---
 
@@ -250,6 +326,10 @@ auth:
 
 명세 작성 완료 후 아래를 검증한다.
 
+- [ ] project.id 가 kebab-case 이고 폴더명과 일치하는가
+- [ ] project.version, project.ports, project.database 가 모두 채워져 있는가
+- [ ] ports, database.name 이 다른 프로젝트 YML과 충돌하지 않는가
+- [ ] changelog의 최상단 version 이 project.version 과 일치하는가
 - [ ] 모든 엔티티에 `{table}_id` PK가 있는가
 - [ ] 모든 엔티티에 `created_at`, `updated_at` 감사 컬럼이 있는가
 - [ ] 컬럼명이 snake_case이고 네이밍 규칙(_count, _name, is_)을 따르는가

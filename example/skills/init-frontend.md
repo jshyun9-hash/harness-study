@@ -1,11 +1,16 @@
 # Frontend 초기 셋팅 스킬
 
 ## 트리거
-- `example/frontend/` 폴더가 **없을 때** 자동 실행
-- 또는 사용자가 "프론트 셋팅 해줘" 요청 시
+- `example/projects/{projectId}/frontend/` 가 **없을 때** 자동 실행
+- 또는 사용자가 "프론트 셋팅 해줘" 요청 시 (projectId 확인 필수)
+
+## 입력 (YML에서 읽어옴)
+- `project.id` → `{projectId}`
+- `project.ports.frontend` → Vite dev server 포트
+- `project.ports.backend` → Vite proxy 타깃
 
 ## 목적
-React 기반 사용자용 웹사이트 프론트엔드를 초기화하고,
+React 기반 사용자용 웹사이트 프론트엔드를 `projects/{projectId}/frontend/` 에 초기화하고,
 **Header + Content + Footer** 반응형 레이아웃을 미리 만들어 둔다.
 
 ## 기술 스택
@@ -13,13 +18,13 @@ harness/stack.md 참조:
 - React 19 + TypeScript 6
 - Vite 8
 - Tailwind CSS 4
-- 포트: 5176
+- 포트: YML의 `project.ports.frontend`
 
 ## 생성 순서
 
 ### 1. Vite 프로젝트 스캐폴딩
 ```bash
-cd example
+cd example/projects/{projectId}
 npm create vite@latest frontend -- --template react-ts
 cd frontend
 ```
@@ -38,6 +43,8 @@ rm -f src/App.tsx
 
 ### 4. 설정 파일 덮어쓰기
 
+> 포트는 YML의 값을 치환해서 쓴다.
+
 #### frontend/vite.config.ts
 ```typescript
 import { defineConfig } from 'vite';
@@ -47,10 +54,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5176,
+    port: {ports.frontend},
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8081',
+        target: 'http://127.0.0.1:{ports.backend}',
       },
     },
   },
@@ -107,12 +114,19 @@ export default function App() {
 
 ### 8. 검증
 ```bash
-cd frontend
+cd projects/{projectId}/frontend
 npx tsc -b
 npx vite build
 ```
 
 모두 통과하면 셋팅 완료.
+
+## 실행
+```bash
+cd projects/{projectId}/frontend
+npm run dev
+# → http://localhost:{ports.frontend}
+```
 
 ## 주의사항
 - 레이아웃은 harness/style-guide.md 사용자용 클린 테마 준수

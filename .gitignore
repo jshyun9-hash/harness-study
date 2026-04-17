@@ -25,9 +25,9 @@ studio/frontend/
 studio/backend/
 studio/spec/
 studio/data/
-example/frontend/
-example/backend/
-example/data/
+
+# example: projects/ 하위는 전체가 재생성 가능한 파생물 (YML 기반)
+example/projects/
 
 # Claude Code
 .claude/

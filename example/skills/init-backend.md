@@ -1,26 +1,32 @@
 # Backend 초기 셋팅 스킬
 
 ## 트리거
-- `example/backend/` 폴더가 **없을 때** 자동 실행
-- 또는 사용자가 "백엔드 셋팅 해줘" 요청 시
+- `example/projects/{projectId}/backend/` 가 **없을 때** 자동 실행
+- 또는 사용자가 "백엔드 셋팅 해줘" 요청 시 (projectId 확인 필수)
+
+## 입력 (YML에서 읽어옴)
+- `project.id` → `{projectId}` (패키지명 / 폴더명)
+- `project.ports.backend` → 서버 포트
+- `project.ports.frontend` → CORS 허용 오리진, 프록시 타깃
+- `project.database.name` → H2 파일명
 
 ## 목적
-Spring Boot + JPA + H2 기반 백엔드 프로젝트를 초기화한다.
+Spring Boot + JPA + H2 기반 백엔드 프로젝트를 `projects/{projectId}/backend/` 에 초기화한다.
 
 ## 기술 스택
 harness/stack.md 참조:
 - Spring Boot 3.x + Java 17
 - JPA (Hibernate)
-- H2 파일 모드 (영구 저장)
+- H2 파일 모드 (영구 저장, 프로젝트별 분리)
 - Gradle (Kotlin DSL)
-- 포트: 8081
+- 포트: YML의 `project.ports.backend` 값
 
 ## 생성 순서
 
 ### 1. Spring Initializr로 스캐폴딩
 
 ```bash
-cd example
+cd example/projects/{projectId}
 curl -s -o backend.zip "https://start.spring.io/starter.zip?\
 dependencies=web,data-jpa,validation,h2,lombok&\
 type=gradle-project-kotlin&\
@@ -28,13 +34,14 @@ language=java&\
 javaVersion=17&\
 groupId=com.harness&\
 artifactId=backend&\
-name=harness-example-backend&\
-packageName=com.harness.example"
+name=harness-{projectId}-backend&\
+packageName=com.harness.{projectId의 camelCase}"
 unzip -q backend.zip -d backend
 rm backend.zip
 ```
 
 > `bootVersion` 파라미터 생략 (서버 기본값 사용)
+> `{projectId의 camelCase}`: kebab-case 의 하이픈 제거 후 lowerCamelCase. 예: `resort-reservation` → `resortReservation`
 
 ### 2. 스캐폴딩 직후 정리
 ```bash
@@ -43,15 +50,15 @@ rm backend/src/main/resources/application.properties
 
 ### 3. 최종 프로젝트 구조
 ```
-backend/
+projects/{projectId}/backend/
 ├── build.gradle.kts
 ├── settings.gradle.kts
 ├── gradle/
 ├── gradlew
 ├── gradlew.bat
 └── src/main/
-    ├── java/com/harness/example/
-    │   ├── HarnessExampleApplication.java
+    ├── java/com/harness/{projectIdCamel}/
+    │   ├── {ProjectIdPascal}Application.java
     │   ├── domain/                    # 기능별 도메인 (비어있음)
     │   └── global/
     │       ├── common/
@@ -65,13 +72,16 @@ backend/
 ```
 
 ### 4. application.yml
+
+> 포트/DB 이름은 반드시 YML의 값을 치환해서 쓴다.
+
 ```yaml
 spring:
   application:
-    name: harness-example
+    name: {projectId}
 
   datasource:
-    url: jdbc:h2:file:../data/exampledb;AUTO_SERVER=TRUE
+    url: jdbc:h2:file:./data/{database.name};AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -91,7 +101,7 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
 server:
-  port: 8081
+  port: {ports.backend}
 
 logging:
   level:
@@ -99,11 +109,18 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
 ```
 
+> `./data/` 는 backend 실행 기준 상대경로 → `projects/{projectId}/backend/data/` 가 아니라
+> **`projects/{projectId}/data/`** 에 DB 파일이 생기도록 `../data/{database.name}` 를 사용한다.
+>
+> 즉 실제로는: `url: jdbc:h2:file:../data/{database.name};AUTO_SERVER=TRUE`
+
 ### 5. 공통 클래스
+
+패키지는 `com.harness.{projectIdCamel}` 로 치환.
 
 #### global/common/ApiResponse.java
 ```java
-package com.harness.example.global.common;
+package com.harness.{projectIdCamel}.global.common;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -131,7 +148,7 @@ public class ApiResponse<T> {
 
 #### global/common/PageResponse.java
 ```java
-package com.harness.example.global.common;
+package com.harness.{projectIdCamel}.global.common;
 
 import java.util.List;
 import lombok.Builder;
@@ -158,8 +175,11 @@ public class PageResponse<T> {
 ```
 
 #### global/config/CorsConfig.java
+
+> allowedOrigins 는 YML의 `ports.frontend` 값을 치환해서 넣는다.
+
 ```java
-package com.harness.example.global.config;
+package com.harness.{projectIdCamel}.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -174,8 +194,9 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:5176")
-                        .allowedMethods("*");
+                        .allowedOrigins("http://localhost:{ports.frontend}")
+                        .allowedMethods("*")
+                        .allowCredentials(true);
             }
         };
     }
@@ -184,9 +205,9 @@ public class CorsConfig {
 
 #### global/config/GlobalExceptionHandler.java
 ```java
-package com.harness.example.global.config;
+package com.harness.{projectIdCamel}.global.config;
 
-import com.harness.example.global.common.ApiResponse;
+import com.harness.{projectIdCamel}.global.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -222,7 +243,7 @@ public class GlobalExceptionHandler {
 
 ### 6. 검증
 ```bash
-cd backend
+cd projects/{projectId}/backend
 ./gradlew build
 ```
 
@@ -230,8 +251,8 @@ cd backend
 
 ## 실행
 ```bash
-cd backend
+cd projects/{projectId}/backend
 ./gradlew bootRun
-# → http://localhost:8081
-# → H2 콘솔: http://localhost:8081/h2-console
+# → http://localhost:{ports.backend}
+# → H2 콘솔: http://localhost:{ports.backend}/h2-console
 ```
