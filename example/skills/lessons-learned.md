@@ -39,3 +39,16 @@
 11. **네비게이션 현재 페이지 활성 표시 필수** — 메뉴에 활성 상태 스타일이 없으면 사용자가 현재 위치를 인지할 수 없음. `useLocation()`으로 현재 경로를 판단하고 활성 메뉴에 차별 스타일 적용.
     - 데스크톱: `text-indigo-600 border-b-2 border-indigo-600`
     - 모바일 서랍: `bg-indigo-50 text-indigo-600`
+
+12. **Gradle toolchain 버전은 로컬 JDK와 일치시키기** — Spring Initializr에서 `javaVersion=17` 로 받아도, 환경에 Java 17이 없고 21만 있으면 `toolchain {languageVersion = 17}` 이 컴파일 실패를 일으킨다. 해결:
+    - build.gradle.kts 의 `JavaLanguageVersion.of(17)` → 로컬 JDK 버전에 맞춰 수정 (e.g. 21)
+    - 또는 auto-provisioning 활성화 (`gradle.properties`)
+    - 재생성 시 Claude가 `java --version` 결과를 보고 toolchain 값을 동적으로 설정해야 함
+
+13. **Java record 의 static factory method 이름은 component 이름과 겹치면 안 된다** — record `CheckIdResponse(boolean available, ...)` 에 `public static CheckIdResponse available()` 를 만들면 컴파일 에러 ("Illegal return type of accessor"). record component accessor 와 이름이 같으면 충돌. 접두사(`of`, `as`)를 붙여 회피.
+    ```java
+    // ❌
+    public static CheckIdResponse available() { ... }
+    // ✅
+    public static CheckIdResponse ofAvailable() { ... }
+    ```
